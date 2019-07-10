@@ -38,6 +38,7 @@ import android.content.Context
 class RWDC2018Application : Application() {
 
   companion object {
+    var isPlayingSong = false
     private lateinit var instance: RWDC2018Application
 
     fun getAppContext(): Context = instance.applicationContext

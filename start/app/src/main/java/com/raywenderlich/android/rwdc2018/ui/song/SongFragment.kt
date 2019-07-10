@@ -37,6 +37,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
 import android.support.v4.app.Fragment
+import android.support.v4.content.ContextCompat
 import android.support.v4.content.LocalBroadcastManager
 import android.view.LayoutInflater
 import android.view.View
@@ -46,55 +47,75 @@ import com.raywenderlich.android.rwdc2018.app.Constants
 import com.raywenderlich.android.rwdc2018.app.RWDC2018Application
 import com.raywenderlich.android.rwdc2018.app.SongUtils
 import com.raywenderlich.android.rwdc2018.service.DownloadIntentService
+import com.raywenderlich.android.rwdc2018.service.SongService
 import kotlinx.android.synthetic.main.fragment_song.*
 
 class SongFragment : Fragment() {
 
-  companion object {
-    fun newInstance(): SongFragment {
-      return SongFragment()
+    companion object {
+        fun newInstance(): SongFragment {
+            return SongFragment()
+        }
     }
-  }
 
-  override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-    return inflater.inflate(R.layout.fragment_song, container, false)
-  }
-private val receiver = object : BroadcastReceiver(){
-  override fun onReceive(context: Context?, intent: Intent?) {
-    var param = intent?.getStringExtra(DownloadIntentService.DOWNLOAD_COMPLETE_KEY)
-    if(SongUtils.songFile().exists()){
-      playButton.isEnabled = true
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        return inflater.inflate(R.layout.fragment_song, container, false)
     }
-  }
-}
-  override fun onResume() {
-    super.onResume()
 
-    if (!SongUtils.songFile().exists()) {
-      playButton.isEnabled = false
-      stopButton.isEnabled = false
+    private val receiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            var param = intent?.getStringExtra(DownloadIntentService.DOWNLOAD_COMPLETE_KEY)
+            if (SongUtils.songFile().exists()) {
+                playButton.isEnabled = true
+            }
+        }
     }
-  }
 
-  override fun onStart() {
-    super.onStart()
-    LocalBroadcastManager.getInstance(RWDC2018Application.getAppContext())
-            .registerReceiver(receiver, IntentFilter(DownloadIntentService.DOWNLOAD_COMPLETE))
-  }
-
-  override fun onStop() {
-    super.onStop()
-    LocalBroadcastManager.getInstance(RWDC2018Application.getAppContext())
-            .unregisterReceiver(receiver)
-  }
-
-  override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-    super.onViewCreated(view, savedInstanceState)
-
-    downloadButton.setOnClickListener{
-      DownloadIntentService.startActionDownload(view.context, Constants.SONG_URL)
-      playButton.isEnabled = false
-      stopButton.isEnabled = false
+    override fun onResume() {
+        super.onResume()
+        enablePlayStopButton()
     }
-  }
+
+    override fun onStart() {
+        super.onStart()
+        LocalBroadcastManager.getInstance(RWDC2018Application.getAppContext())
+                .registerReceiver(receiver, IntentFilter(DownloadIntentService.DOWNLOAD_COMPLETE))
+    }
+
+    override fun onStop() {
+        super.onStop()
+        LocalBroadcastManager.getInstance(RWDC2018Application.getAppContext())
+                .unregisterReceiver(receiver)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        downloadButton.setOnClickListener {
+            DownloadIntentService.startActionDownload(view.context, Constants.SONG_URL)
+            playButton.isEnabled = false
+            stopButton.isEnabled = false
+        }
+        playButton.setOnClickListener{
+            val ctx = context
+            if(ctx != null){
+                ContextCompat.startForegroundService(ctx, Intent(ctx, SongService::class.java))
+            }
+            enablePlayStopButton()
+        }
+        stopButton.setOnClickListener{
+            stopPlaying()
+        }
+    }
+
+    private fun stopPlaying() {
+        activity?.stopService(Intent(context, SongService::class.java))
+        enablePlayStopButton()
+    }
+
+    fun enablePlayStopButton() {
+        playButton.isEnabled = !RWDC2018Application.isPlayingSong
+        stopButton.isEnabled = RWDC2018Application.isPlayingSong
+
+    }
 }

@@ -93,7 +93,8 @@ class PhotosRepository : Repository {
     }
 
     override fun unregister() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        LocalBroadcastManager.getInstance(RWDC2018Application.getAppContext())
+                .unregisterReceiver(receiver)
     }
 
     private fun schedulePeriodicWorkRequest() {

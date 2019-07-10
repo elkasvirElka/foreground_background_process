@@ -13,8 +13,12 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <service
+            android:name=".service.SongService"
+            android:enabled="true"
+            android:exported="true"></service>
+        <service
             android:name=".service.FetchIntentService"
-            android:exported="false"></service>
+            android:exported="false" />
         <service
             android:name=".service.DownloadIntentService"
             android:enabled="true"

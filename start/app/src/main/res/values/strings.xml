@@ -7,4 +7,7 @@
   <string name="download">Download</string>
   <string name="play">Play</string>
   <string name="stop">Stop</string>
+  <string name="challenge">Your Challenge: RWDC ;)</string>
+  <string name="media_playback">Media Playback</string>
+
 </resources>
