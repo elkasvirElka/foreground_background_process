@@ -33,82 +33,111 @@ package com.raywenderlich.android.rwdc2018.repository
 
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.MutableLiveData
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.AsyncTask
+import android.support.v4.content.LocalBroadcastManager
 import androidx.work.*
 import com.raywenderlich.android.rwdc2018.app.PhotosUtils
+import com.raywenderlich.android.rwdc2018.app.RWDC2018Application
 import com.raywenderlich.android.rwdc2018.service.DownloadWorker
+import com.raywenderlich.android.rwdc2018.service.FetchIntentService
 import java.util.concurrent.TimeUnit
 
 
 class PhotosRepository : Repository {
 
-  companion object {
-    const val DOWNLOAD_WORK_TAG = "DOWNLOAD_WORK_TAG"
-  }
 
-  private val photosLiveData = MutableLiveData<List<String>>()
-  private val bannerLiveData = MutableLiveData<String>()
-
-  init {
-    schedulePeriodicWorkRequest()
-  }
-
-  override fun getPhotos(): LiveData<List<String>> {
-    FetchPhotosAsyncTask({ photos ->
-      photosLiveData.value = photos
-    }).execute()
-    return photosLiveData
-  }
-
-  override fun getBanner(): LiveData<String> {
-    FetchBannerAsyncTask({ banner ->
-      bannerLiveData.value = banner
-    }).execute()
-    return bannerLiveData
-  }
-
-  private fun schedulePeriodicWorkRequest() {
-    val constraints = Constraints.Builder()
-        .setRequiredNetworkType(NetworkType.CONNECTED)
-        .setRequiresStorageNotLow(true)
-        .build()
-
-    val workManager = WorkManager.getInstance()
-
-    val request: WorkRequest = PeriodicWorkRequestBuilder<DownloadWorker>(15, TimeUnit.MINUTES)
-        .setConstraints(constraints)
-        .addTag(DOWNLOAD_WORK_TAG)
-        .build()
-
-    workManager.cancelAllWorkByTag(DOWNLOAD_WORK_TAG)
-    workManager.enqueue(request)
-  }
-
-  private class FetchBannerAsyncTask(val callback: (String) -> Unit)
-    : AsyncTask<Void, Void, String>() {
-    override fun doInBackground(vararg params: Void): String? {
-      val photosString = PhotosUtils.photoJsonString()
-      return PhotosUtils.bannerFromJsonString(photosString ?: "")
+    companion object {
+        const val DOWNLOAD_WORK_TAG = "DOWNLOAD_WORK_TAG"
     }
 
-    override fun onPostExecute(result: String?) {
-      if (result != null) {
-        callback(result)
-      }
-    }
-  }
 
-  private class FetchPhotosAsyncTask(val callback: (List<String>) -> Unit)
-    : AsyncTask<Void, Void, List<String>>() {
-    override fun doInBackground(vararg params: Void): List<String>? {
-      val photosString = PhotosUtils.photoJsonString()
-      return PhotosUtils.photoUrlsFromJsonString(photosString ?: "")
+    private val photosLiveData = MutableLiveData<List<String>>()
+    private val bannerLiveData = MutableLiveData<String>()
+    private val receiver = object : BroadcastReceiver() {
+        override fun onReceive(p0: Context?, p1: Intent?) {
+            FetchBannerAsyncTask { banner ->
+                bannerLiveData.value = banner
+            }.execute()
+            FetchPhotosAsyncTask { photos ->
+                photosLiveData.value = photos
+            }.execute()
+        }
     }
 
-    override fun onPostExecute(result: List<String>?) {
-      if (result != null) {
-        callback(result)
-      }
+    init {
+        schedulePeriodicWorkRequest()
     }
-  }
+
+    override fun getPhotos(): LiveData<List<String>> {
+        FetchPhotosAsyncTask({ photos ->
+            photosLiveData.value = photos
+        }).execute()
+        return photosLiveData
+    }
+
+    override fun getBanner(): LiveData<String> {
+        FetchBannerAsyncTask({ banner ->
+            bannerLiveData.value = banner
+        }).execute()
+        return bannerLiveData
+    }
+
+
+    override fun register() {
+        LocalBroadcastManager.getInstance(RWDC2018Application.getAppContext())
+                .registerReceiver(receiver, IntentFilter(FetchIntentService.FETCH_COMPLETE))
+    }
+
+    override fun unregister() {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    private fun schedulePeriodicWorkRequest() {
+        val constraints = Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .setRequiresStorageNotLow(true)
+                .build()
+
+        val workManager = WorkManager.getInstance()
+
+        val request: WorkRequest = PeriodicWorkRequestBuilder<DownloadWorker>(15, TimeUnit.MINUTES)
+                .setConstraints(constraints)
+                .addTag(DOWNLOAD_WORK_TAG)
+                .build()
+
+        workManager.cancelAllWorkByTag(DOWNLOAD_WORK_TAG)
+        workManager.enqueue(request)
+    }
+
+    private class FetchBannerAsyncTask(val callback: (String) -> Unit)
+        : AsyncTask<Void, Void, String>() {
+        override fun doInBackground(vararg params: Void): String? {
+            val photosString = PhotosUtils.photoJsonString()
+            return PhotosUtils.bannerFromJsonString(photosString ?: "")
+        }
+
+        override fun onPostExecute(result: String?) {
+            if (result != null) {
+                callback(result)
+            }
+        }
+    }
+
+    private class FetchPhotosAsyncTask(val callback: (List<String>) -> Unit)
+        : AsyncTask<Void, Void, List<String>>() {
+        override fun doInBackground(vararg params: Void): List<String>? {
+            val photosString = PhotosUtils.photoJsonString()
+            return PhotosUtils.photoUrlsFromJsonString(photosString ?: "")
+        }
+
+        override fun onPostExecute(result: List<String>?) {
+            if (result != null) {
+                callback(result)
+            }
+        }
+    }
 }

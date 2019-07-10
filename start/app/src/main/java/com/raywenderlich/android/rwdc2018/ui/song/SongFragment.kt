@@ -31,13 +31,21 @@
 
 package com.raywenderlich.android.rwdc2018.ui.song
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
 import android.support.v4.app.Fragment
+import android.support.v4.content.LocalBroadcastManager
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.raywenderlich.android.rwdc2018.R
+import com.raywenderlich.android.rwdc2018.app.Constants
+import com.raywenderlich.android.rwdc2018.app.RWDC2018Application
 import com.raywenderlich.android.rwdc2018.app.SongUtils
+import com.raywenderlich.android.rwdc2018.service.DownloadIntentService
 import kotlinx.android.synthetic.main.fragment_song.*
 
 class SongFragment : Fragment() {
@@ -51,11 +59,40 @@ class SongFragment : Fragment() {
   override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
     return inflater.inflate(R.layout.fragment_song, container, false)
   }
-
+private val receiver = object : BroadcastReceiver(){
+  override fun onReceive(context: Context?, intent: Intent?) {
+    var param = intent?.getStringExtra(DownloadIntentService.DOWNLOAD_COMPLETE_KEY)
+    if(SongUtils.songFile().exists()){
+      playButton.isEnabled = true
+    }
+  }
+}
   override fun onResume() {
     super.onResume()
 
     if (!SongUtils.songFile().exists()) {
+      playButton.isEnabled = false
+      stopButton.isEnabled = false
+    }
+  }
+
+  override fun onStart() {
+    super.onStart()
+    LocalBroadcastManager.getInstance(RWDC2018Application.getAppContext())
+            .registerReceiver(receiver, IntentFilter(DownloadIntentService.DOWNLOAD_COMPLETE))
+  }
+
+  override fun onStop() {
+    super.onStop()
+    LocalBroadcastManager.getInstance(RWDC2018Application.getAppContext())
+            .unregisterReceiver(receiver)
+  }
+
+  override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    super.onViewCreated(view, savedInstanceState)
+
+    downloadButton.setOnClickListener{
+      DownloadIntentService.startActionDownload(view.context, Constants.SONG_URL)
       playButton.isEnabled = false
       stopButton.isEnabled = false
     }

@@ -55,6 +55,15 @@ class PhotosFragment : Fragment() {
     }
   }
 
+  override fun onStart() {
+    super.onStart()
+    viewModel.onStart()
+  }
+
+  override fun onStop() {
+    super.onStop()
+    viewModel.onStop()
+  }
   override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
     return inflater.inflate(R.layout.fragment_photos, container, false)
   }
