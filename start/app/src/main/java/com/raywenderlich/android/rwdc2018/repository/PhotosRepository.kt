@@ -73,16 +73,16 @@ class PhotosRepository : Repository {
     }
 
     override fun getPhotos(): LiveData<List<String>> {
-        FetchPhotosAsyncTask({ photos ->
+        FetchPhotosAsyncTask { photos ->
             photosLiveData.value = photos
-        }).execute()
+        }.execute()
         return photosLiveData
     }
 
     override fun getBanner(): LiveData<String> {
-        FetchBannerAsyncTask({ banner ->
+        FetchBannerAsyncTask { banner ->
             bannerLiveData.value = banner
-        }).execute()
+        }.execute()
         return bannerLiveData
     }
 

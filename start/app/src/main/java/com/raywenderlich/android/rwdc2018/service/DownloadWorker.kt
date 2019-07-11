@@ -35,6 +35,7 @@ import android.util.Log
 import androidx.work.Worker
 import com.raywenderlich.android.rwdc2018.app.PhotosUtils
 
+/// Download photo every n minutes
 
 class DownloadWorker : Worker() {
 

@@ -7,6 +7,7 @@ import android.support.v4.content.LocalBroadcastManager
 import android.util.Log
 import com.raywenderlich.android.rwdc2018.app.PhotosUtils
 
+//broadcast receiver +
 class FetchIntentService : IntentService("FetchIntentService") {
 
     companion object {
@@ -24,7 +25,7 @@ class FetchIntentService : IntentService("FetchIntentService") {
 
     override fun onHandleIntent(intent: Intent?) {
         when (intent?.action){
-            ACTION_FETCH  ->{
+            ACTION_FETCH  -> {
                 handleActionFetch()
             }
         }

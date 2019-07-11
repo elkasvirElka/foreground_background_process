@@ -15,12 +15,15 @@ import com.raywenderlich.android.rwdc2018.app.RWDC2018Application
 import com.raywenderlich.android.rwdc2018.app.SongUtils
 import com.raywenderlich.android.rwdc2018.ui.main.MainActivity
 
+/// foreground service play song in background 
 class SongService : Service() {
 
     companion object{
         private const val CHANNEL_ID = "media_playback_channel"
     }
+
     private lateinit var player: MediaPlayer
+
     override fun onBind(intent: Intent): IBinder? {
         return null
     }
@@ -40,6 +43,7 @@ class SongService : Service() {
         player.isLooping = false
         player.stop()
     }
+
     @RequiresApi(Build.VERSION_CODES.O)
     private fun createChannel(){
         val notificationManager = this.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -49,6 +53,7 @@ class SongService : Service() {
         channel.lockscreenVisibility = Notification.VISIBILITY_PUBLIC
         notificationManager.createNotificationChannel(channel)
     }
+
     private fun createNotification() : Notification {
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
             createChannel()
